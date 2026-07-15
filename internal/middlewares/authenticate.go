@@ -9,6 +9,9 @@ import (
 	"golangchatapp/internal/utils"
 )
 
+// const block is used to define a set of related constants. Prevents repetition
+// and makes the code cleaner and easier to maintain. In this case, we are defining
+// constants for context keys and platform types.
 const (
 	CtxUserID          string = "userId"
 	CtxUserDisplayName string = "name"
@@ -18,6 +21,12 @@ const (
 	PlatformMobile            = "mobile"
 )
 
+/*
+  - HandlerFunc is a type that represents a function that can handle HTTP
+    requests. It takes an http.ResponseWriter and an *http.Request as parameters. This is the standard
+
+*
+*/
 func Authenticate(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := strings.TrimSpace(r.Header.Get(string(CtxAuthorization)))
@@ -46,6 +55,7 @@ func Authenticate(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
+		// similar to NodeJs req.user, we are adding the userId and name to the request context so that it can be accessed in the next handler.
 		ctx := r.Context()
 		ctx = context.WithValue(ctx, CtxUserID, userId)
 		ctx = context.WithValue(ctx, CtxUserDisplayName, name)

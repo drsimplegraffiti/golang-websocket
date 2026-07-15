@@ -10,21 +10,32 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-var DB *sql.DB
+var DB *sql.DB // this is a global variable that holds the database connection.
+// It is of type *sql.DB, which is a pointer to an sql.DB struct. The sql.DB struct
+// represents a database connection pool and provides methods for interacting with
+// the database.
 
 func InitDB(dbPath, dbName string) {
+	// os.MkdirAll creates a directory named path, along with any necessary
+	// parents, and returns nil, or else returns an error. The permission bits perm
+	// (before umask) are used for all directories that MkdirAll creates. If path
+	// is already a directory, MkdirAll does nothing and returns nil.
 	err := os.MkdirAll(dbPath, os.ModePerm)
 	if err != nil {
 		log.Fatalf("failed to create db directory, %v", err)
 	}
 
 	dbFile := filepath.Join(dbPath, dbName)
-	db, err := sql.Open("sqlite", dbFile)
+	db, err := sql.Open("sqlite", dbFile) // dbFile is the path to the SQLite database file. If the file does not exist, it will be created.
+	// e.g dbFile := "sqlite/dev/api.db" will create a SQLite database file named
+	// api.db in the sqlite/dev directory.
 	if err != nil {
 		log.Fatalf("failed to open db, %v", err)
 	}
 
-	err = db.Ping()
+	err = db.Ping() // Ping verifies a connection to the database is still
+	// alive, establishing a connection if necessary. It returns an error if the
+	// connection is not alive.
 	if err != nil {
 		log.Fatalf("failed to ping db, %v", err)
 	}
@@ -33,6 +44,10 @@ func InitDB(dbPath, dbName string) {
 	db.SetMaxIdleConns(5)
 
 	// sqlite specific settings
+	// these pragmas are used to configure the behavior of the SQLite database.
+	// They can improve performance and ensure data integrity.
+	// the PRAGMA statements are executed using the Exec method of the sql.DB
+	// struct.
 	pragmas := []string{
 		"PRAGMA journal_mode = WAL;",  // speeds up perform
 		"PRAGMA busy_timeout = 5000;", // max time of 5 secs of one query to fininsh
@@ -109,7 +124,8 @@ func InitDB(dbPath, dbName string) {
 		}
 	}
 
-	DB = db
+	DB = db // assign the database connection to the global variable DB, so it
+	// can be used throughout the application.
 
 	log.Print("DB initialized")
 }

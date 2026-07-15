@@ -9,8 +9,8 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "name": "John",
-  "email": "john@example.com",
+  "name": "jane",
+  "email": "jane@example.com",
   "password": "password123"
 }
 
@@ -251,11 +251,12 @@ Authorization: Bearer
   "event_type": "message",
   "payload": {
     "private_id": 1,
-    "receiver_id": 2,
+    "receiver_id": 3,
     "message_type": "text",
     "content": "Hello from REST WS!"
   }
 }
+END
 
 
 ### ---------------- MARK DELIVERED ----------------
@@ -294,5 +295,5 @@ GET ws://localhost:8082/api/ws
     "is_typing": true
   }
 }
-
+END
 

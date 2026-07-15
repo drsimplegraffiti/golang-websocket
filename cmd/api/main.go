@@ -19,29 +19,54 @@ import (
 
 // Run app with: go run ./cmd/api -config ./config/dev.env
 func main() {
+	// we can use the config package to load the configuration from the
+	// environment variables or a .env file
 	cfg := config.LoadConfig()
 
 	utils.InitJwt(cfg.JWTKey)
 
 	db.InitDB(cfg.DBPath, cfg.DBName)
-	defer db.CloseDB()
+	defer db.CloseDB() // defer the closing of the database connection until the
+	// main function exits
 
 	// logger
 	// mux := routes.RegisterRoutes()
 	hub := realtime.NewHub()
 	mux := routes.RegisterRoutes(hub)
 
+	// observe the chain of middlewares applied to the mux. The order of
+	// middleware application is important, as it determines the sequence in
+	// which requests are processed. In this case, the LoggingMiddleware is
+	// applied first, followed by the CorsMiddleware. This means that every
+	// incoming request will first be logged and then have CORS headers applied
+	// before reaching the actual route handlers.
 	loggerMux := middlewares.LoggingMiddleware(mux)
 	corsMux := middlewares.CorsMiddleware(loggerMux)
+	// other middlewares to consider: AuthenticationMiddleware,
+	// RateLimitingMiddleware, PanicRecoveryMiddleware, etc.
 
 	// mount routes
 
-	server := &http.Server{
-		Addr:    cfg.HTTPServer.Address,
+	server := &http.Server{ // we use & because we want to create a pointer to
+		// the http.Server struct, which allows us to modify its fields and call
+		// its methods directly.
+		Addr: cfg.HTTPServer.Address, // this can be cfg.Address directly,
+		// but using cfg.HTTPServer.Address allows for more flexibility in the
+		// future if we want to add more server configurations
 		Handler: corsMux,
+
+		// other performance tuning options to consider: ReadTimeout,
+		// WriteTimeout, IdleTimeout, MaxHeaderBytes, etc.
+		MaxHeaderBytes: 1 << 20, // 1 MB
+		WriteTimeout:   15 * time.Second,
+		IdleTimeout:    60 * time.Second,
+		ReadTimeout:    15 * time.Second, // this is the maximum duration for
+		// reading the entire request, including the body
 	}
 
-	shutdownCh := make(chan os.Signal, 1)
+	shutdownCh := make(chan os.Signal, 1) // make a channel to listen for OS
+	// signals, with a buffer size of 1 to ensure that we don't miss any signals
+	// if the channel is not read immediately
 	signal.Notify(shutdownCh, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
@@ -66,19 +91,40 @@ func main() {
 		// WebSocket
 		log.Printf("Websocket connection, GET: ws://%s/api/ws", server.Addr)
 
-		err := server.ListenAndServe()
-		if err != nil && err != http.ErrServerClosed {
+		err := server.ListenAndServe() // ListenAndServe starts the HTTP server
+		// and blocks until the server is stopped or an error occurs. It returns
+		// an error if the server fails to start or if it is shut down
+		// unexpectedly.
+		if err != nil && err != http.ErrServerClosed { // != nil means that an
+			// error occurred, and != http.ErrServerClosed means that the
+			// error is not due to the server being shut down gracefully. In
+			// this case, we log the error and exit the application with a non-zero status code
 			log.Fatalf("failed to start server: %v", err)
 		}
 	}()
 
-	sig := <-shutdownCh
+	sig := <-shutdownCh // we block the main goroutine until we receive a signal
+	// from the shutdownCh
+	// i.e when the user presses Ctrl+C or the process receives a termination
+	// signal
 	log.Printf("Shutdown signal received: %v", sig)
 
+	// context are used to manage timeouts and cancellations for operations that
+	// may take a long time to complete. In this case, we create a context with
+	// a timeout of 10 seconds, which means that if the server does not shut
+	// down gracefully within 10 seconds, the shutdown process will be
+	// forcefully terminated.
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	defer cancel() // the cancel function is called to release resources
+	// associated with the context when the shutdown process is complete. This
+	// is important to prevent memory leaks and ensure that the application
+	// cleans up properly.
 
-	err := server.Shutdown(ctx)
+	err := server.Shutdown(ctx) // this method gracefully shuts down the server
+	// without interrupting any active connections. It stops accepting new
+	// requests and waits for existing connections to finish within the timeout
+	// specified by the context. If the timeout is reached before all connections are closed,
+	// the server will forcefully terminate any remaining connections.
 	if err != nil {
 		log.Printf("server Shutdown failed %v:", err)
 	} else {
@@ -87,7 +133,8 @@ func main() {
 
 	hub.Shutdown()
 
-	signal.Stop(shutdownCh)
+	signal.Stop(shutdownCh) // this stops the signal notification for the
+	// shutdownCh channel, preventing further signals from being sent to it. This is important to avoid
 	close(shutdownCh)
 
 	log.Println("Application exited cleanly")
