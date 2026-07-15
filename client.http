@@ -1,0 +1,298 @@
+### Health Check
+GET http://localhost:8082/api/health
+Accept: application/json
+
+
+### Register User (Email)
+POST http://localhost:8082/api/auth/register-email
+Content-Type: application/json
+Accept: application/json
+
+{
+  "name": "John",
+  "email": "john@example.com",
+  "password": "password123"
+}
+
+
+### Login User (Email)
+POST http://localhost:8082/api/auth/login-email
+Content-Type: application/json
+Accept: application/json
+X-Platform: web
+
+{
+  "email": "abayomiogunnusi@gmail.com",
+  "password": "admin123"
+}
+
+
+### Logout
+POST http://localhost:8082/api/auth/logout
+Accept: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjozLCJuYW1lIjoiSm9obiIsIlgtcGxhdGZvcm0iOiJ3ZWIiLCJzdWIiOiIzIiwiZXhwIjoxNzg0MTQwNTMwfQ.aVJ3CbjhppF4siTjBdg5K-kzXN630peDZemTbTRKg_M
+X-Platform: web
+
+
+### Refresh Session
+POST http://localhost:8082/api/auth/refresh-session
+Content-Type: application/json
+Accept: application/json
+X-Platform: web
+
+{
+  "refresh_token": "1K0slT8sOJw3mT24DVyMxXSUTQUJPTEq-_7u7NxHKzg="
+}
+
+
+### Get Current User
+POST http://localhost:8082/api/auth/current-user
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjozLCJuYW1lIjoiSm9obiIsIlgtcGxhdGZvcm0iOiJ3ZWIiLCJzdWIiOiIzIiwiZXhwIjoxNzg0MTQwNTMwfQ.aVJ3CbjhppF4siTjBdg5K-kzXN630peDZemTbTRKg_M
+X-Platform: web
+
+{
+  "refresh_token": "<REFRESH_TOKEN>"
+}
+
+
+### Get User by ID
+GET http://localhost:8082/api/users/3
+Accept: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjozLCJuYW1lIjoiSm9obiIsIlgtcGxhdGZvcm0iOiJ3ZWIiLCJzdWIiOiIzIiwiZXhwIjoxNzg0MTQwNjAzfQ.nJ7cb3NvSGnVEoNek5W0emvVRub0WMzJvo880lqEvIE
+X-Platform: web
+
+
+### Get All Conversations for Current User
+GET http://localhost:8082/api/conversations
+Accept: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjozLCJuYW1lIjoiSm9obiIsIlgtcGxhdGZvcm0iOiJ3ZWIiLCJzdWIiOiIzIiwiZXhwIjoxNzg0MTQwNjAzfQ.nJ7cb3NvSGnVEoNek5W0emvVRub0WMzJvo880lqEvIE
+X-Platform: web
+
+
+### Create a Private Conversation
+POST http://localhost:8082/api/conversations/privates/create
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjozLCJuYW1lIjoiSm9obiIsIlgtcGxhdGZvcm0iOiJ3ZWIiLCJzdWIiOiIzIiwiZXhwIjoxNzg0MTQwNjAzfQ.nJ7cb3NvSGnVEoNek5W0emvVRub0WMzJvo880lqEvIE
+X-Platform: web
+
+{
+  "receiver_id": 2
+}
+
+
+### Get a Private Conversation by ID
+GET http://localhost:8082/api/conversations/privates/1
+Accept: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjozLCJuYW1lIjoiSm9obiIsIlgtcGxhdGZvcm0iOiJ3ZWIiLCJzdWIiOiIzIiwiZXhwIjoxNzg0MTQwNjAzfQ.nJ7cb3NvSGnVEoNek5W0emvVRub0WMzJvo880lqEvIE
+X-Platform: web
+
+
+### Get Private Conversation Messages (Paginated)
+GET http://localhost:8082/api/conversations/privates/123/messages?page=1&limit=20
+Accept: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjozLCJuYW1lIjoiSm9obiIsIlgtcGxhdGZvcm0iOiJ3ZWIiLCJzdWIiOiIzIiwiZXhwIjoxNzg0MTQwNjAzfQ.nJ7cb3NvSGnVEoNek5W0emvVRub0WMzJvo880lqEvIE
+X-Platform: web
+
+
+### Upload File to Private Chat
+POST http://localhost:8082/api/files/123
+Authorization: Bearer <ACCESS_TOKEN>
+X-Platform: web
+Content-Type: multipart/form-data
+
+
+### Get Uploaded File
+GET http://localhost:8082/api/files/chats/123/456/test.png
+Authorization: Bearer <ACCESS_TOKEN>
+X-Platform: web
+
+### Logout
+POST http://localhost:8082/api/auth/logout
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJuYW1lIjoiYWJheW9taSIsIlgtcGxhdGZvcm0iOiJ3ZWIiLCJzdWIiOiIxIiwiZXhwIjoxNzg0MDkxMjAwfQ.caMN1XMzldpXYEXJ0kuIFWJpjtkWt2n_QCVSxsN9RSI
+X-Platform : web
+Accept: application/json
+
+
+
+
+###  Current User from Refresh Token
+POST http://localhost:8082/api/auth/current-user
+Content-Type: application/json
+X-Platform : web
+Accept: application/json
+
+{
+    "refresh_token":"VPeTctu5MJH3iWCYrlT407q0xpxJtMYNrAI_baNuXPo="
+}
+
+
+
+@token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjozLCJuYW1lIjoiSm9obiIsIlgtcGxhdGZvcm0iOiJ3ZWIiLCJzdWIiOiIzIiwiZXhwIjoxNzg0MTQwOTMyfQ.Cyy_nyLgHoJi7LxTpETMPO9yQc3Y2qO9iz-CwTDjquA
+
+### Connect and send a "message" event on connect
+WEBSOCKET ws://localhost:8082/api/ws
+Authorization: Bearer {{token}}
+
+{
+  "event_type": "message",
+  "payload": {
+    "private_id": 1,
+    "receiver_id": 3,
+    "message_type": "text",
+    "content": "hello from kulala"
+  }
+}
+
+### WS health check
+WEBSOCKET ws://localhost:8082/api/health-check-ws
+
+{
+    "message":"hi"
+}
+
+
+
+### Refresh Session
+POST http://localhost:8082/api/auth/refresh-session
+Content-Type: application/json
+Accept: application/json
+X-Platform: web
+
+{
+  "refresh_token": "<REFRESH_TOKEN>"
+}
+
+
+### Get Current User
+POST http://localhost:8082/api/auth/current-user
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer <ACCESS_TOKEN>
+X-Platform: web
+
+{
+  "refresh_token": "<REFRESH_TOKEN>"
+}
+
+
+### Get User by ID
+GET http://localhost:8082/api/users/123
+Accept: application/json
+Authorization: Bearer <ACCESS_TOKEN>
+X-Platform: web
+
+
+### Get All Conversations for Current User
+GET http://localhost:8082/api/conversations
+Accept: application/json
+Authorization: Bearer <ACCESS_TOKEN>
+X-Platform: web
+
+
+### Create a Private Conversation
+POST http://localhost:8082/api/conversations/privates/create
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer <ACCESS_TOKEN>
+X-Platform: web
+
+{
+  "receiver_id": 456
+}
+
+
+### Get a Private Conversation by ID
+GET http://localhost:8082/api/conversations/privates/123
+Accept: application/json
+Authorization: Bearer <ACCESS_TOKEN>
+X-Platform: web
+
+
+### Get Private Conversation Messages (Paginated)
+GET http://localhost:8082/api/conversations/privates/123/messages?page=1&limit=20
+Accept: application/json
+Authorization: Bearer <ACCESS_TOKEN>
+X-Platform: web
+
+
+### Upload File to Private Chat
+POST http://localhost:8082/api/files/123
+Authorization: Bearer <ACCESS_TOKEN>
+X-Platform: web
+Content-Type: multipart/form-data
+
+
+### Get Uploaded File
+GET http://localhost:8082/api/files/chats/123/456/test.png
+Authorization: Bearer <ACCESS_TOKEN>
+X-Platform: web
+
+
+### ---------------- WS Health Check ----------------
+# Connect to WebSocket health check
+GET ws://localhost:8082/api/health-check-ws
+
+
+### Connect to WebSocket
+GET ws://localhost:8082/api/ws
+Authorization: Bearer <ACCESS_TOKEN>
+X-Platform: web
+
+### ---------------- SEND MESSAGE ----------------
+# Send a text message in a private chat
+WEBSOCKET ws://localhost:8082/api/ws
+Authorization: Bearer 
+
+{
+  "event_type": "message",
+  "payload": {
+    "private_id": 1,
+    "receiver_id": 2,
+    "message_type": "text",
+    "content": "Hello from REST WS!"
+  }
+}
+
+
+### ---------------- MARK DELIVERED ----------------
+# Mark a message as delivered
+GET ws://localhost:8082/api/ws
+
+{
+  "event_type": "delivered",
+  "payload": {
+    "message_id": 789
+  }
+}
+
+
+### ---------------- MARK READ ----------------
+# Mark a message as read
+GET ws://localhost:8082/api/ws
+
+{
+  "event_type": "read",
+  "payload": {
+    "message_id": 789
+  }
+}
+
+
+### ---------------- TYPING INDICATOR ----------------
+# Notify typing status
+GET ws://localhost:8082/api/ws
+
+{
+  "event_type": "typing",
+  "payload": {
+    "private_id": 123,
+    "receiver_id": 456,
+    "is_typing": true
+  }
+}
+
+

@@ -1,0 +1,223 @@
+package routes
+
+import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"strings"
+
+	"golangchatapp/internal/middlewares"
+	"golangchatapp/internal/models"
+	"golangchatapp/internal/utils"
+)
+
+func handleEmailRegister(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Name     string `json:"name"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		utils.JSON(w, http.StatusBadRequest, false, "invalid request body", nil)
+		return
+	}
+
+	if req.Email == "" || req.Name == "" || req.Password == "" {
+		utils.JSON(w, http.StatusBadRequest, false, "invalid credentials", nil)
+		return
+	}
+
+	existingUser, _ := models.GetUserByEmail(req.Email)
+	if existingUser != nil {
+		utils.JSON(w, http.StatusConflict, false, "user already exists", nil)
+		return
+	}
+
+	hashedPassword, err := utils.HashPassword(req.Password)
+	if err != nil {
+		utils.JSON(w, http.StatusInternalServerError, false, "signup failed please try again later", nil)
+		return
+	}
+
+	user, err := models.CreateUserByEmail(req.Name, req.Email, hashedPassword)
+	if err != nil {
+		fmt.Println(err)
+		utils.JSON(w, http.StatusInternalServerError, false, "internal server error", nil)
+		return
+	}
+
+	utils.JSON(w, http.StatusCreated, true, "success", user)
+}
+
+func handleEmailLogin(w http.ResponseWriter, r *http.Request) {
+	platform := strings.ToLower(strings.TrimSpace(r.Header.Get(middlewares.CtxPlatform)))
+	if platform != middlewares.PlatformMobile && platform !=
+		middlewares.PlatformWeb {
+		utils.JSON(w, http.StatusBadRequest, false, "invalid platform", nil)
+		return
+	}
+
+	var req struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		utils.JSON(w, http.StatusBadRequest, false, "invalid request body", nil)
+		return
+	}
+
+	if req.Email == "" || req.Password == "" {
+		utils.JSON(w, http.StatusBadRequest, false, "invalid credentials", nil)
+		return
+	}
+
+	existingUser, err := models.GetUserByEmail(req.Email)
+	if err != nil || existingUser == nil {
+		utils.JSON(w, http.StatusConflict, false, "user already exists", nil)
+		return
+	}
+
+	err = utils.CheckHashPassword(existingUser.Password, req.Password)
+	if err != nil {
+		utils.JSON(w, http.StatusUnauthorized, false, "invalid credentials", nil)
+		return
+	}
+
+	accessToken, err := utils.GenerateJWT(existingUser.ID, existingUser.Name, platform)
+	if err != nil {
+		utils.JSON(w, http.StatusInternalServerError, false, "E0 - login failed", nil)
+		return
+	}
+
+	refreshToken, err := utils.GenerateRefreshToken()
+	if err != nil {
+		utils.JSON(w, http.StatusInternalServerError, false, "E1 - login failed", nil)
+		return
+	}
+
+	err = models.UpdateUserUserRefreshToken(existingUser.ID, platform, refreshToken)
+	if err != nil {
+		utils.JSON(w, http.StatusInternalServerError, false, "E3 - login failed", nil)
+		return
+	}
+
+	utils.JSON(w, http.StatusOK, true, "login successful", map[string]any{
+		"user":         existingUser,
+		"accessToken":  accessToken,
+		"refreshToken": refreshToken,
+	})
+}
+
+func handleLogout(w http.ResponseWriter, r *http.Request) {
+	userId, ok := r.Context().Value(middlewares.CtxUserID).(int64)
+	if !ok {
+		utils.JSON(w, http.StatusUnauthorized, false, "Unauthorized", nil)
+		return
+	}
+
+	platform, ok := r.Context().Value(middlewares.CtxPlatform).(string)
+
+	if !ok {
+		utils.JSON(w, http.StatusUnauthorized, false, "L0 - Unauthorized", nil)
+		return
+	}
+
+	err := models.DeleteUserRefreshToken(userId, platform)
+	if err != nil {
+		utils.JSON(w, http.StatusInternalServerError, false, "something went wrong", nil)
+		return
+	}
+
+	utils.JSON(w, http.StatusOK, true, "logged out", nil)
+}
+
+func handleRefreshSession(w http.ResponseWriter, r *http.Request) {
+	platform := strings.ToLower(strings.TrimSpace(r.Header.Get(middlewares.CtxPlatform)))
+	if platform != middlewares.PlatformMobile && platform !=
+		middlewares.PlatformWeb {
+		utils.JSON(w, http.StatusBadRequest, false, "invalid platform", nil)
+		return
+	}
+
+	var req struct {
+		RefreshToken string `json:"refresh_token"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		utils.JSON(w, http.StatusBadRequest, false, "invalid request body", nil)
+		return
+	}
+
+	if req.RefreshToken == "" {
+		utils.JSON(w, http.StatusBadRequest, false, "invalid payload", nil)
+		return
+	}
+
+	existingUser, err := models.GetUserByRefreshToken(req.RefreshToken, platform)
+	if err != nil || existingUser == nil {
+		utils.JSON(w, http.StatusConflict, false, "invalid credentials", nil)
+		return
+	}
+
+	accessToken, err := utils.GenerateJWT(existingUser.ID, existingUser.Name, platform)
+	if err != nil {
+		utils.JSON(w, http.StatusInternalServerError, false, "E0 - session failed", nil)
+		return
+	}
+
+	refreshToken, err := utils.GenerateRefreshToken()
+	if err != nil {
+		utils.JSON(w, http.StatusInternalServerError, false, "E1 - session failed", nil)
+		return
+	}
+
+	err = models.UpdateUserUserRefreshToken(existingUser.ID, platform, refreshToken)
+	if err != nil {
+		utils.JSON(w, http.StatusInternalServerError, false, "E3 - session failed", nil)
+		return
+	}
+
+	utils.JSON(w, http.StatusOK, true, "login successful", map[string]any{
+		"accessToken":  accessToken,
+		"refreshToken": refreshToken,
+	})
+}
+
+func handleCurrentUser(w http.ResponseWriter, r *http.Request) {
+	platform := strings.ToLower(strings.TrimSpace(r.Header.Get(middlewares.CtxPlatform)))
+	if platform != middlewares.PlatformMobile && platform !=
+		middlewares.PlatformWeb {
+		utils.JSON(w, http.StatusBadRequest, false, "invalid platform", nil)
+		return
+	}
+
+	var req struct {
+		RefreshToken string `json:"refresh_token"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		utils.JSON(w, http.StatusBadRequest, false, "invalid request body", nil)
+		return
+	}
+
+	if req.RefreshToken == "" {
+		utils.JSON(w, http.StatusBadRequest, false, "invalid payload", nil)
+		return
+	}
+
+	existingUser, err := models.GetUserByRefreshToken(req.RefreshToken, platform)
+	if err != nil || existingUser == nil {
+		utils.JSON(w, http.StatusConflict, false, "invalid credentials", nil)
+		return
+	}
+
+	utils.JSON(w, http.StatusOK, true, "user profile", map[string]any{
+		"user": existingUser,
+	})
+}

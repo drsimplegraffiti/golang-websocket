@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Go Chat WebSocket Tester</title>
+
+<style>
+body{
+    font-family:Arial,Helvetica,sans-serif;
+    max-width:1000px;
+    margin:20px auto;
+    background:#f5f5f5;
+}
+
+.card{
+    background:white;
+    padding:20px;
+    margin-bottom:20px;
+    border-radius:10px;
+    box-shadow:0 0 8px rgba(0,0,0,.1);
+}
+
+input,textarea,button{
+    width:100%;
+    margin-top:8px;
+    margin-bottom:12px;
+    padding:10px;
+    box-sizing:border-box;
+}
+
+button{
+    cursor:pointer;
+}
+
+.row{
+    display:flex;
+    gap:10px;
+}
+
+.row>*{
+    flex:1;
+}
+
+#log{
+    background:#111;
+    color:#0f0;
+    padding:15px;
+    height:400px;
+    overflow:auto;
+    white-space:pre-wrap;
+}
+</style>
+
+</head>
+<body>
+
+<div class="card">
+
+<h2>Connection</h2>
+
+<label>Websocket URL</label>
+<input id="url"
+value="ws://172.18.0.1:8082/api/ws">
+
+<label>JWT Token</label>
+<textarea id="token" rows="4"></textarea>
+
+<div class="row">
+<button onclick="connect()">Connect</button>
+<button onclick="disconnect()">Disconnect</button>
+</div>
+
+</div>
+
+<div class="card">
+
+<h2>Send Chat Message</h2>
+
+<input id="privateId" placeholder="Private ID">
+<input id="receiverId" placeholder="Receiver ID">
+
+<select id="messageType">
+<option value="text">text</option>
+<option value="image">image</option>
+<option value="video">video</option>
+</select>
+
+<textarea id="message" rows="4"
+placeholder="Message"></textarea>
+
+<button onclick="sendMessage()">Send Message</button>
+
+</div>
+
+<div class="card">
+
+<h2>Typing</h2>
+
+<div class="row">
+<button onclick="typing(true)">Typing ON</button>
+<button onclick="typing(false)">Typing OFF</button>
+</div>
+
+</div>
+
+<div class="card">
+
+<h2>Delivery / Read</h2>
+
+<input id="messageId" placeholder="Message ID">
+
+<div class="row">
+<button onclick="delivered()">Delivered</button>
+<button onclick="readMsg()">Read</button>
+</div>
+
+</div>
+
+<div class="card">
+
+<h2>Event Log</h2>
+
+<pre id="log"></pre>
+
+</div>
+
+<script>
+
+let socket;
+
+function log(msg){
+
+    const area=document.getElementById("log");
+
+    area.textContent += msg+"\n";
+
+    area.scrollTop=area.scrollHeight;
+
+}
+
+function connect(){
+
+    const url=document.getElementById("url").value;
+
+    const token=document.getElementById("token").value.trim();
+
+    socket=new WebSocket(url+"?token="+encodeURIComponent(token));
+
+    socket.onopen=()=>{
+        log("CONNECTED");
+    };
+
+    socket.onclose=()=>{
+        log("DISCONNECTED");
+    };
+
+    socket.onerror=(e)=>{
+        log("ERROR");
+        console.log(e);
+    };
+
+    socket.onmessage=(event)=>{
+
+        try{
+
+            const data=JSON.parse(event.data);
+
+            log("RECEIVED\n"+JSON.stringify(data,null,2));
+
+        }catch{
+
+            log(event.data);
+
+        }
+
+    };
+
+}
+
+function disconnect(){
+
+    socket.close();
+
+}
+
+function send(obj){
+
+    socket.send(JSON.stringify(obj));
+
+    log("SENT\n"+JSON.stringify(obj,null,2));
+
+}
+
+function sendMessage(){
+
+    send({
+
+        event_type:"message",
+
+        payload:{
+
+            private_id:Number(document.getElementById("privateId").value),
+
+            receiver_id:Number(document.getElementById("receiverId").value),
+
+            message_type:document.getElementById("messageType").value,
+
+            content:document.getElementById("message").value
+
+        }
+
+    });
+
+}
+
+function typing(state){
+
+    send({
+
+        event_type:"typing",
+
+        payload:{
+
+            private_id:Number(document.getElementById("privateId").value),
+
+            receiver_id:Number(document.getElementById("receiverId").value),
+
+            is_typing:state
+
+        }
+
+    });
+
+}
+
+function delivered(){
+
+    send({
+
+        event_type:"delivered",
+
+        payload:{
+
+            message_id:Number(document.getElementById("messageId").value)
+
+        }
+
+    });
+
+}
+
+function readMsg(){
+
+    send({
+
+        event_type:"read",
+
+        payload:{
+
+            message_id:Number(document.getElementById("messageId").value)
+
+        }
+
+    });
+
+}
+
+</script>
+
+</body>
+</html>
