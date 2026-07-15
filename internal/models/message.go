@@ -44,6 +44,72 @@ func CreateMessage(m *Message) error {
 	return db.DB.QueryRow(`SELECT created_at FROM messages WHERE id = ?`, id).Scan(&m.CreatedAt)
 }
 
+func GetMessagesByPrivateIDWithFilter(privateID int64, filter string, page, limit int) ([]Message, error) {
+	if page < 1 {
+		page = 1
+	}
+
+	if limit < 1 {
+		limit = 20
+	}
+
+	offset := (page - 1) * limit
+
+	query := `
+		SELECT id, from_id, private_id, message_type, content, delivered, read, created_at
+		FROM messages
+		WHERE private_id = ?
+	`
+
+	args := []any{privateID}
+
+	if filter != "" {
+		query += " AND content LIKE ?"
+		args = append(args, "%"+filter+"%")
+	}
+
+	query += `
+		ORDER BY created_at DESC
+		LIMIT ? OFFSET ?
+	`
+
+	args = append(args, limit, offset)
+
+	rows, err := db.DB.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var messages []Message
+
+	for rows.Next() {
+		var m Message
+
+		err := rows.Scan(
+			&m.ID,
+			&m.FromID,
+			&m.PrivateID,
+			&m.MessageType,
+			&m.Content,
+			&m.Delivered,
+			&m.Read,
+			&m.CreatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		messages = append(messages, m)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return messages, nil
+}
+
 func GetMessagesByPrivateID(privateID int64, page, limit int) ([]Message, error) {
 	if page < 1 {
 		page = 1
