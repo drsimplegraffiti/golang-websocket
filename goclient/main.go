@@ -241,7 +241,8 @@ func main() {
 	token := flag.String("token", "", "JWT Token")
 	name := flag.String("name", "User", "Display name")
 
-	flag.Parse()
+	flag.Parse() // this line parses the command-line flags and assigns their
+	// values to the corresponding variables.
 
 	if *token == "" {
 		log.Fatal("token is required")
