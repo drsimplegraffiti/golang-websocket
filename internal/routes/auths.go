@@ -11,12 +11,22 @@ import (
 	"golangchatapp/internal/utils"
 )
 
-func handleEmailRegister(w http.ResponseWriter, r *http.Request) {
+func handleEmailRegister(w http.ResponseWriter, r *http.Request) { // *http is
+	// used to define a pointer to an http.Request struct, which represents the
+	// incoming HTTP request. The http.ResponseWriter is used to construct the HTTP
+	// response.
 	var req struct {
 		Name     string `json:"name"`
 		Email    string `json:"email"`
 		Password string `json:"password"`
 	}
+
+	// json.NewDecoder means that we are creating a new JSON decoder that reads
+	// from the request body (r.Body). The Decode method is then called on this
+	// decoder, which attempts to parse the JSON data from the request body and
+	// populate the req struct with the corresponding values. If the JSON is
+	// malformed or doesn't match the expected structure, an error will be
+	// returned.
 
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {

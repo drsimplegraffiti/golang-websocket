@@ -8,10 +8,28 @@ import (
 )
 
 type Hub struct {
-	Clients map[int64]map[*Client]struct{}
-	mu      sync.RWMutex
+	Clients map[int64]map[*Client]struct{} // map[userId]map[*Client]struct{} to
+	// track multiple connections per user
+	// lets break it down:
+	// - The outer map has keys of type int64, which represent user IDs. Each user ID maps to a value that is another map.
+	// - The inner map has keys of type *Client, which are pointers to Client structs. The values in this inner map are empty structs (struct{}), which take up no space and are used here just to indicate the presence of a Client.
+	// - This structure allows us to efficiently track multiple active
+	// connections (clients) for each user. If a user has multiple devices or
+	// browser tabs open, each connection can be represented by a separate Client
+	// instance in the inner map.
+	mu sync.RWMutex
+
+	// mu is a read-write mutex that protects access to the Clients map. It
+	// allows multiple goroutines to read from the map concurrently, but only one
+	// goroutine can write to it at a time. This ensures thread-safe access to the
+	// Clients
 }
 
+// constructors are used to create new instances of a struct. In this case,
+// NewHub is a constructor function that initializes a new Hub instance with an
+// empty Clients map and returns a pointer to it. This allows other parts of the
+// code to create and use a Hub instance without having to manually initialize its
+// fields.
 func NewHub() *Hub {
 	return &Hub{
 		Clients: make(map[int64]map[*Client]struct{}),
@@ -19,6 +37,12 @@ func NewHub() *Hub {
 }
 
 func (h *Hub) broadcastToAll(event Event) {
+	// the RLock method is used to acquire a read lock on the mutex. This allows
+	// multiple goroutines to read from the Clients map concurrently, but prevents
+	// any goroutine from writing to it while the read lock is held. The RUnlock
+	// method is deferred to ensure that the read lock is released when the
+	// function returns, allowing other goroutines to acquire the lock and access
+	// the Clients map.
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 

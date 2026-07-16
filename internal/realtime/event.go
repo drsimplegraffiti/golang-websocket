@@ -2,6 +2,9 @@ package realtime
 
 type EventType string
 
+// Events are used to communicate between the server and the client. They are
+// sent over WebSocket connections and can be used to notify the client of various
+// events, such as new messages, user status changes, etc.
 const (
 	// -------------------- WebSocket --------------------
 	EventCurrentUsers EventType = "current_users"

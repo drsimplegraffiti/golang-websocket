@@ -38,6 +38,10 @@ func handleWebSocket(hub *realtime.Hub, w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	// this is where we upgrade the HTTP connection to a WebSocket connection.
+	// The AcceptOptions struct allows us to specify options for the WebSocket
+	// connection, such as allowed origin patterns. In this case, we are allowing
+	// connections from any origin by using the wildcard "*".
 	opts := &websocket.AcceptOptions{
 		OriginPatterns: []string{"*"},
 	}
@@ -48,6 +52,10 @@ func handleWebSocket(hub *realtime.Hub, w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	// this is where we create a new client instance for the connected user. The
+	// NewClient function initializes a new Client struct with the user's
+	// information and the WebSocket connection. It also creates a buffered channel
+	// for sending events to the client.
 	client := realtime.NewClient(user, conn)
 
 	hub.RegisterClientConnection(client)
@@ -67,6 +75,9 @@ func handleWebSocket(hub *realtime.Hub, w http.ResponseWriter, r *http.Request) 
 	readPump(ctx, cancel, hub, client)
 }
 
+// Heartbeat function is used to send a heartbeat event to the client every 30
+// seconds. This is done to keep the connection alive and to detect if the client
+// has disconnected. If the ping fails, the client is disconnected.
 func heartbeat(ctx context.Context, client *realtime.Client) {
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
@@ -75,9 +86,15 @@ func heartbeat(ctx context.Context, client *realtime.Client) {
 		select {
 		case <-ctx.Done():
 			return
-		case <-ticker.C:
-			pingCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
-			err := client.Conn.Ping(pingCtx)
+		case <-ticker.C: // C is a channel that receives the current time every
+			// 30 seconds. When the ticker ticks, we send a heartbeat event to the
+			//    client.
+			pingCtx, cancel := context.WithTimeout(ctx, 5*time.Second) //
+			// ensures that the ping does not block indefinitely. If the ping takes
+			// longer than 5 seconds, it will be cancelled.
+			err := client.Conn.Ping(pingCtx) // pingCtx is used to set a timeout
+			// for the ping operation. If the ping takes longer than 5 seconds, it
+			// will be cancelled and an error will be returned.client
 			if err != nil {
 				log.Println("Ping failed, disconnecting client.")
 				cancel()
@@ -85,6 +102,11 @@ func heartbeat(ctx context.Context, client *realtime.Client) {
 			}
 			cancel()
 
+			// this is where we send the heartbeat event to the client. The
+			// Event struct contains the event type and payload. In this case, the
+			// event type is realtime.EventHeartbeat and the payload is nil. The
+			// SendEvent method sends the event to the client's Send channel, which
+			// is then picked up by the writePump goroutine and sent to the client over the WebSocket connection.
 			client.Send <- realtime.Event{
 				EventType: realtime.EventHeartbeat,
 				Payload:   nil,
@@ -99,7 +121,11 @@ func writePump(ctx context.Context, client *realtime.Client) {
 		case <-ctx.Done():
 			return
 
-		case event, ok := <-client.Send:
+		case event, ok := <-client.Send: // we use a select statement to listen
+			// for events on the client's Send channel. When an event is received, we
+			// write it to the WebSocket connection using the wsjson.Write function. If
+			// the context is done (e.g., the client has disconnected), we exit the
+			// loop and return.
 			if !ok {
 				return
 			}
@@ -120,6 +146,11 @@ func readPump(ctx context.Context, cancel context.CancelFunc, hub *realtime.Hub,
 		}
 	}()
 
+	// // this is like a while loop that continuously reads events from the
+	// WebSocket connection. The select statement is used to listen for the
+	// context being done (e.g., the client has disconnected) and to read events
+	// from the WebSocket connection. When an event is received, it is passed to
+	// the handleIncomingEvent function for processing.
 	for {
 		select {
 		case <-ctx.Done():
@@ -158,7 +189,8 @@ func handleIncomingEvent(hub *realtime.Hub, client *realtime.Client, event realt
 			return
 		}
 
-		privateId := int64(privateIdFloat)
+		privateId := int64(privateIdFloat) // here we convert the float64 to
+		// int64, which is the expected type for privateId.
 
 		receiverIdAny, ok := payload["receiver_id"]
 		if !ok {
@@ -186,7 +218,9 @@ func handleIncomingEvent(hub *realtime.Hub, client *realtime.Client, event realt
 			return
 		}
 
-		msgBytes, _ := json.Marshal(payload)
+		msgBytes, _ := json.Marshal(payload) // json.Marshal is used to convert
+		// the payload map into a JSON byte slice. This is necessary because the
+		// next step involves unmarshalling this JSON into a Message struct.
 		var msg models.Message
 		err := json.Unmarshal(msgBytes, &msg)
 		if err != nil {
