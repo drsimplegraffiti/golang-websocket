@@ -22,7 +22,7 @@ Accept: application/json
 X-Platform: web
 
 {
-  "email": "abayomiogunnusi@gmail.com",
+  "email": "mimi@gmail.com",
   "password": "admin123"
 }
 
@@ -251,9 +251,9 @@ Authorization: Bearer
   "event_type": "message",
   "payload": {
     "private_id": 1,
-    "receiver_id": 3,
+    "receiver_id": 2,
     "message_type": "text",
-    "content": "Hello from REST WS!"
+    "content": "this is john wick"
   }
 }
 END

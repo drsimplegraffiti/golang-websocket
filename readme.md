@@ -30,12 +30,12 @@ Run: User A
 
 go run main.go \
 -url=ws://localhost:8082/api/ws \
--token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjozLCJuYW1lIjoiSm9obiIsIlgtcGxhdGZvcm0iOiJ3ZWIiLCJzdWIiOiIzIiwiZXhwIjoxNzg0MTQyMjQ0fQ.KevXUWBvIVh8qa2g0rpan5IF159LfdhjB5M84LfKtIc \
+-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJuYW1lIjoiYWJheW9taSIsIlgtcGxhdGZvcm0iOiJ3ZWIiLCJzdWIiOiIxIiwiZXhwIjoxNzg0MjcwMjIwfQ.skTlZOJhNo02I8YxMtfJnP0lj9cuS28RlgZwKvnsIbU \
 -name=Alice
 
 Run: User B
 go run main.go \
--token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJuYW1lIjoiYWJheW9taSIsIlgtcGxhdGZvcm0iOiJ3ZWIiLCJzdWIiOiIxIiwiZXhwIjoxNzg0MTQyODI3fQ.qd6FLHd2oV_7Z7mMyIAY-iZCRQnD0QlZIYV6X8E5GhE \
+-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJuYW1lIjoibWltaSIsIlgtcGxhdGZvcm0iOiJ3ZWIiLCJzdWIiOiIyIiwiZXhwIjoxNzg0MjcwMzQ1fQ.pDOZ9DSp_oz9N9EeLP7CH3ynSGcC_2gsbyaRQmrrvO0 \
 -name=Bob
 
 
