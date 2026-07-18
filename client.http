@@ -9,8 +9,8 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "name": "jane",
-  "email": "jane@example.com",
+  "name": "maria",
+  "email": "maria@example.com",
   "password": "password123"
 }
 

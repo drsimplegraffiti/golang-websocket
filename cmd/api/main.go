@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
@@ -25,9 +26,20 @@ func main() {
 
 	utils.InitJwt(cfg.JWTKey)
 
-	db.InitDB(cfg.DBPath, cfg.DBName)
-	defer db.CloseDB() // defer the closing of the database connection until the
+	// db.InitDB(cfg.DBPath, cfg.DBName)
+	// defer db.CloseDB() // defer the closing of the database connection until the
 	// main function exits
+
+	dbFile := filepath.Join(cfg.DBPath, cfg.DBName)
+	dbConn, err := db.InitDB(cfg.DBPath, cfg.DBName)
+	if err != nil {
+		log.Fatalf("startup: %v", err)
+	}
+	defer db.CloseDB(dbConn)
+
+	if err := db.RunMigrations(dbFile, "./migrations"); err != nil {
+		log.Fatalf("migrations: %v", err)
+	}
 
 	// logger
 	// mux := routes.RegisterRoutes()
@@ -120,7 +132,9 @@ func main() {
 	// is important to prevent memory leaks and ensure that the application
 	// cleans up properly.
 
-	err := server.Shutdown(ctx) // this method gracefully shuts down the server
+	// err := server.Shutdown(ctx) // this method gracefully shuts down the server
+	err = server.Shutdown(ctx)
+
 	// without interrupting any active connections. It stops accepting new
 	// requests and waits for existing connections to finish within the timeout
 	// specified by the context. If the timeout is reached before all connections are closed,
