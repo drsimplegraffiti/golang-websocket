@@ -31,6 +31,7 @@ func main() {
 	// main function exits
 
 	dbFile := filepath.Join(cfg.DBPath, cfg.DBName)
+	log.Println("db file:", dbFile)
 	dbConn, err := db.InitDB(cfg.DBPath, cfg.DBName)
 	if err != nil {
 		log.Fatalf("startup: %v", err)
@@ -83,23 +84,23 @@ func main() {
 
 	go func() {
 		log.Printf("server is running on http://%s", cfg.HTTPServer.Address)
-		log.Printf("Server is running at: http://%s", server.Addr)
+		// log.Printf("Server is running at: http://%s", server.Addr)
 		// Health Checks
-		log.Printf("Health Check HTTP, GET: http://%s/api/health-check-http", server.Addr)
-		log.Printf("Health Check WS, GET: ws://%s/api/health-check-ws", server.Addr)
-		// Authentications
-		log.Printf("Email register, POST: http://%s/api/auth/register-email", server.Addr)
-		log.Printf("Email login, POST: http://%s/api/auth/login-email", server.Addr)
-		log.Printf("Logout, POST: http://%s/api/auth/logout", server.Addr)
-		log.Printf("Session Refresh, POST: http://%s/api/auth/refresh-session", server.Addr)
-		log.Printf("Current User, POST: http://%s/api/auth/current-user", server.Addr)
-		// Users
-		log.Printf("Get User by ID, GET: http://%s/api/users/{user_id}", server.Addr)
-		// Conversations
-		log.Printf("GET Conversation, GET: http://%s/api/conversations/privates/{private_id}", server.Addr)
-		log.Printf("Join Conversation, POST: http://%s/api/conversations/privates/join", server.Addr)
-		log.Printf("GET All Conversations: http://%s/api/conversations", server.Addr)
-		log.Printf("GET Conversation Messages (paginated): http://%s/api/conversations/privates/{private_id}/messages?page=1&limit=20", server.Addr)
+		// log.Printf("Health Check HTTP, GET: http://%s/api/health-check-http", server.Addr)
+		// log.Printf("Health Check WS, GET: ws://%s/api/health-check-ws", server.Addr)
+		// // Authentications
+		// log.Printf("Email register, POST: http://%s/api/auth/register-email", server.Addr)
+		// log.Printf("Email login, POST: http://%s/api/auth/login-email", server.Addr)
+		// log.Printf("Logout, POST: http://%s/api/auth/logout", server.Addr)
+		// log.Printf("Session Refresh, POST: http://%s/api/auth/refresh-session", server.Addr)
+		// log.Printf("Current User, POST: http://%s/api/auth/current-user", server.Addr)
+		// // Users
+		// log.Printf("Get User by ID, GET: http://%s/api/users/{user_id}", server.Addr)
+		// // Conversations
+		// log.Printf("GET Conversation, GET: http://%s/api/conversations/privates/{private_id}", server.Addr)
+		// log.Printf("Join Conversation, POST: http://%s/api/conversations/privates/join", server.Addr)
+		// log.Printf("GET All Conversations: http://%s/api/conversations", server.Addr)
+		// log.Printf("GET Conversation Messages (paginated): http://%s/api/conversations/privates/{private_id}/messages?page=1&limit=20", server.Addr)
 		// WebSocket
 		log.Printf("Websocket connection, GET: ws://%s/api/ws", server.Addr)
 
