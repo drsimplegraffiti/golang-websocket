@@ -3,18 +3,23 @@ package routes
 import (
 	"net/http"
 
+	"golangchatapp/internal/events"
 	"golangchatapp/internal/middlewares"
 	"golangchatapp/internal/realtime"
 )
 
 // func RegisterRoutes() *http.ServeMux {
-func RegisterRoutes(hub *realtime.Hub) *http.ServeMux {
+
+func RegisterRoutes(hub *realtime.Hub, eventBus *events.EventBus) *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/health", HandleHealthCheckHTTP)
 
 	// authentication
 
-	mux.HandleFunc("POST /api/auth/register-email", handleEmailRegister)
+	mux.HandleFunc("POST /api/auth/register-email", func(w http.ResponseWriter, r *http.Request) {
+		handleEmailRegister(w, r, eventBus)
+	})
+
 	mux.HandleFunc("POST /api/auth/login-email", handleEmailLogin)
 	mux.HandleFunc("POST /api/auth/logout", middlewares.Authenticate(
 		handleLogout))
@@ -28,6 +33,7 @@ func RegisterRoutes(hub *realtime.Hub) *http.ServeMux {
 	// Conversations
 	mux.HandleFunc("GET /api/conversations/privates/{private_id}", middlewares.Authenticate(handleGetPrivate))
 	mux.HandleFunc("POST /api/conversations/privates/create", middlewares.Authenticate(handleCreatePrivate))
+
 	mux.HandleFunc("GET /api/conversations", middlewares.Authenticate(handleGetConversations))
 	mux.HandleFunc("GET /api/conversations/privates/{private_id}/messages", middlewares.Authenticate(handleGetPrivateMessages))
 	// GET /api/conversations/privates/123?page=2&limit=50

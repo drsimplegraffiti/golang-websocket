@@ -1,17 +1,21 @@
 package routes
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
+	"golangchatapp/internal/events"
 	"golangchatapp/internal/middlewares"
 	"golangchatapp/internal/models"
 	"golangchatapp/internal/utils"
 )
 
-func handleEmailRegister(w http.ResponseWriter, r *http.Request) { // *http is
+// func handleEmailRegister(w http.ResponseWriter, r *http.Request) { // *http is
+func handleEmailRegister(w http.ResponseWriter, r *http.Request, eventBus *events.EventBus) {
 	// used to define a pointer to an http.Request struct, which represents the
 	// incoming HTTP request. The http.ResponseWriter is used to construct the HTTP
 	// response.
@@ -57,6 +61,41 @@ func handleEmailRegister(w http.ResponseWriter, r *http.Request) { // *http is
 		utils.JSON(w, http.StatusInternalServerError, false, "internal server error", nil)
 		return
 	}
+
+	// ─── Event-Driven Email Trigger ─────────────────────────────
+	// Fire-and-forget: HTTP response isn't blocked by email sending
+	go func() {
+		// Generate verification URL (you'd have a proper token generation)
+		verifyURL := fmt.Sprintf("http://localhost:8080/verify?token=%s&user=%d",
+			"temp-token", user.ID)
+
+		eventPayload := struct {
+			UserID    int64  `json:"user_id"`
+			Email     string `json:"email"`
+			Name      string `json:"name"`
+			VerifyURL string `json:"verify_url"`
+		}{
+			UserID:    user.ID,
+			Email:     user.Email,
+			Name:      user.Name,
+			VerifyURL: verifyURL,
+		}
+
+		event, err := events.NewEvent(events.EventUserRegistered, eventPayload)
+		if err != nil {
+			// Log but don't fail the request
+			fmt.Printf("Failed to create event: %v\n", err)
+			return
+		}
+
+		// Use background context with timeout for publishing
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		if err := eventBus.Publish(ctx, event); err != nil {
+			fmt.Printf("Failed to publish event: %v\n", err)
+		}
+	}()
 
 	utils.JSON(w, http.StatusCreated, true, "success", user)
 }

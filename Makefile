@@ -27,7 +27,7 @@ build:
 
 ## Run the API directly (no binary artifact)
 run:
-	$(GO) run $(CMD_DIR)
+	$(GO) run $(CMD_DIR) | true
 
 ## Run with dev.env loaded into the environment
 dev:

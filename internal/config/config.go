@@ -18,12 +18,21 @@ type HTTPServer struct {
 	Address string `env:"HTTP_ADDRESS" env-default: "localhost:8082"`
 }
 
+type EmailConfig struct {
+	SMTPHost    string `env:"SMTP_HOST"`
+	SMTPPort    string `env:"SMTP_PORT" envDefault:"465"`
+	SMTPUser    string `env:"SMTP_USER" envDefault:"olukinnif150216029@gmail.com"`
+	SMTPPass    string `env:"SMTP_PASS"`
+	FromAddress string `env:"FROM_EMAIL" envDefault:"joseph@supplysmart.co"`
+}
+
 type Config struct {
 	ENV    string `env:"ENV" env-default: "dev"`
 	DBPath string `env:"DB_PATH" env-default: "sqlite/dev"`
 	DBName string `env:"DB_NAME" env-default: "api.db"`
 	HTTPServer
 	JWTKey string `env:"JWT_KEY" env-default: "supersecretkey"`
+	Email  EmailConfig
 }
 
 // LoadConfig is like a constructor for the Config struct. It reads the

@@ -12,6 +12,8 @@ import (
 
 	"golangchatapp/internal/config"
 	"golangchatapp/internal/db"
+	"golangchatapp/internal/email"
+	"golangchatapp/internal/events"
 	"golangchatapp/internal/middlewares"
 	"golangchatapp/internal/realtime"
 	"golangchatapp/internal/routes"
@@ -42,10 +44,36 @@ func main() {
 		log.Fatalf("migrations: %v", err)
 	}
 
+	// ─── Event-Driven Infrastructure ─────────────────────────────
+	// Create event bus (buffered channels for async processing)
+	eventBus := events.NewEventBus(100)
+	// Initialize email service
+	var emailSender email.Sender
+	if cfg.Email.SMTPHost != "" {
+		emailSender = email.NewSMTPSender(
+			cfg.Email.SMTPHost,
+			cfg.Email.SMTPPort,
+			cfg.Email.SMTPUser,
+			cfg.Email.SMTPPass,
+			cfg.Email.FromAddress,
+		)
+		log.Println("Email: using SMTP sender")
+	} else {
+		emailSender = email.NewMockSender()
+		log.Println("Email: using mock sender (set SMTP config for production)")
+	}
+
+	emailService := email.NewService(eventBus, emailSender)
+
+	// Start email worker in background
+	emailCtx, emailCancel := context.WithCancel(context.Background())
+	emailService.Start(emailCtx)
+	defer emailCancel()
+
 	// logger
 	// mux := routes.RegisterRoutes()
 	hub := realtime.NewHub()
-	mux := routes.RegisterRoutes(hub)
+	mux := routes.RegisterRoutes(hub, eventBus)
 
 	// observe the chain of middlewares applied to the mux. The order of
 	// middleware application is important, as it determines the sequence in
@@ -146,6 +174,10 @@ func main() {
 		log.Println("server Shutdown gracefully")
 	}
 
+	// Shutdown event infrastructure
+	emailCancel()       // Stop email worker
+	emailService.Wait() // BLOCK until it actually exits
+	eventBus.Shutdown() // Close all channels
 	hub.Shutdown()
 
 	signal.Stop(shutdownCh) // this stops the signal notification for the
